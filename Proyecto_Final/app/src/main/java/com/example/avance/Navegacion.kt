@@ -12,5 +12,11 @@ fun MyApp() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { Principal(navController) }
         composable("secondScreen") {  segunda_pantalla(navController) }
+        composable("notesTasksScreen/{item}") { backStackEntry ->
+            val item = backStackEntry.arguments?.getString("item") ?: "Notas/Tareas"
+            tercera_pantalla(item, listOf(item), navController)
+        }
+
+
     }
 }
