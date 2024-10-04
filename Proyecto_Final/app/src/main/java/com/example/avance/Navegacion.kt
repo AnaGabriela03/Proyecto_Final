@@ -11,6 +11,6 @@ fun MyApp() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { Principal(navController) }
-
+        composable("secondScreen") {  segunda_pantalla(navController) }
     }
 }
