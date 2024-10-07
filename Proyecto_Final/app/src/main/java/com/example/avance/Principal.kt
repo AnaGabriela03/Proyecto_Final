@@ -40,7 +40,7 @@ import androidx.navigation.NavController
 @Composable
 fun Principal(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        //icono de búsqueda
+        // icono de búsqueda
         var searchQuery by remember { mutableStateOf("") }
         TextField(
             value = searchQuery,
@@ -54,7 +54,7 @@ fun Principal(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        //Seleccionar
+        // Seleccionar
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             StatusCard("Todos", 0, Modifier.weight(1f).padding(end = 8.dp), Icons.Default.Home)
             StatusCard("Pendientes", 0, Modifier.weight(1f).padding(start = 8.dp), Icons.Default.Notifications)
@@ -64,42 +64,70 @@ fun Principal(navController: NavController) {
         StatusCard("Terminados", 0, Modifier.fillMaxWidth(), Icons.Default.Check)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // lista de notas y tareas
+        // Lista de notas y tareas
         Text("MIS LISTAS", style = MaterialTheme.typography.titleLarge)
-        // Lista de Notas
-        ListCardWithIcon(
+
+        // Cambiar para que navegue a la tercera pantalla
+        SimpleListCard(
             title = "Notas",
             icon = Icons.Default.Menu,
-            items = listOf("Nota 1", "Nota 2", "Nota 3"),
-            onItemClick = { item -> navController.navigate("notesTasksScreen/$item") }
+            onClick = { navController.navigate("notesTasksScreen/Notas") } // Navega a la tercera pantalla con "Notas"
         )
-        // Lista de Tareas
-        ListCardWithIcon(
+
+        SimpleListCard(
             title = "Tareas",
             icon = Icons.Default.Menu,
-            items = listOf("Tarea 1", "Tarea 2", "Tarea 3"),
-            onItemClick = { item -> navController.navigate("notesTasksScreen/$item") }
+            onClick = { navController.navigate("notesTasksScreen/Tareas") } // Navega a la tercera pantalla con "Tareas"
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Botón Agregar nueva
-        ListCardWithIcon(
+        SimpleListCard(
             title = "Agregar nueva",
             icon = Icons.Default.Add, // Ícono de + para el botón
-            items = listOf(),
             onClick = { navController.navigate("secondScreen") }  // Navegar a la segunda pantalla
         )
     }
 }
 
 
+// Función para las tarjetas simples que se comportan como botones
+@Composable
+fun SimpleListCard(
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit // Callback cuando se hace clic
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() }, // Navega cuando se hace clic
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = icon, contentDescription = title)  // Icono de la lista
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(title)
+            }
+        }
+    }
+}
+
+// Función original para las listas con ítems
 @Composable
 fun ListCardWithIcon(
     title: String,
     icon: ImageVector,
     items: List<String>,
-    onClick: (() -> Unit)? = null,  // Opción de callback para el botón principal
     onItemClick: ((String) -> Unit)? = null // Callback para los ítems
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -108,10 +136,7 @@ fun ListCardWithIcon(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable {
-                if (onClick != null) onClick() else expanded = !expanded
-            },
-        // Hacer clic en "Agregar nueva" o expandir la lista
+            .clickable { expanded = !expanded },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
@@ -146,6 +171,7 @@ fun ListCardWithIcon(
         }
     }
 }
+
 
 @Composable
 fun StatusCard(title: String, count: Int, modifier: Modifier = Modifier, icon: ImageVector) {

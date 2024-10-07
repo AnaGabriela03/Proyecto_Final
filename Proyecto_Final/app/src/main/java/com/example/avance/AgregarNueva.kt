@@ -112,8 +112,7 @@ fun segunda_pantalla(navController: NavController) {
         ListCardWithIcon(
             title = "   lista",
             icon = Icons.Default.Menu,  // Aquí se usa un ícono para la lista
-            items = listOf("Tarea", "Recordatorio"),
-            onClick = { }
+            items = listOf("Tarea", "Nota")
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -230,4 +229,3 @@ fun segunda_pantalla(navController: NavController) {
         }
     }
 }
-
