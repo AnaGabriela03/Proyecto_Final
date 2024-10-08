@@ -34,10 +34,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.foundation.isSystemInDarkTheme
 
-//tercera pantalla
+
 @Composable
 fun tercera_pantalla(title: String, items: List<String>, navController: NavController) {
+    val isDarkTheme = isSystemInDarkTheme() // Detecta si el sistema está en modo oscuro
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)
+    val borderColor = if (isDarkTheme) Color.LightGray else Color.Black
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,7 +52,7 @@ fun tercera_pantalla(title: String, items: List<String>, navController: NavContr
         // Título de la lista en la parte superior
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.copy(color = textColor),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
@@ -54,7 +60,14 @@ fun tercera_pantalla(title: String, items: List<String>, navController: NavContr
 
         // Mostrar lista de tareas
         items.forEachIndexed { index, item ->
-            TaskItem(title = "Título de la tarea $index", description = "Descripción $index", date = "Fecha $index")
+            TaskItem(
+                title = "Título de la tarea $index",
+                description = "Descripción $index",
+                date = "Fecha $index",
+                textColor = textColor,
+                backgroundColor = backgroundColor,
+                borderColor = borderColor
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -63,7 +76,7 @@ fun tercera_pantalla(title: String, items: List<String>, navController: NavContr
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Color.Black, RoundedCornerShape(8.dp))  // Borde alrededor del Box
+                .border(1.dp, borderColor, RoundedCornerShape(8.dp))  // Borde dinámico
                 .padding(8.dp)
         ) {
             Row(
@@ -71,35 +84,38 @@ fun tercera_pantalla(title: String, items: List<String>, navController: NavContr
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Calendario")
+                    Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
                 }
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.AttachFile, contentDescription = "Editar")
+                    Icon(Icons.Default.AttachFile, contentDescription = "Editar", tint = textColor)
                 }
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Cámara")
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
                 }
             }
         }
 
-        // Reducir el espacio extra entre los iconos y el botón de Agregar nueva
         Spacer(modifier = Modifier.height(12.dp))
 
         // Botón Agregar nueva en la parte inferior
-        StyledAddButton(onClick = {})
+        StyledAddButton(
+            onClick = { navController.navigate("secondScreen") },
+            backgroundColor = backgroundColor,
+            textColor = textColor
+        )
     }
 }
 
 @Composable
-fun StyledAddButton(onClick: () -> Unit) {
+fun StyledAddButton(onClick: () -> Unit, backgroundColor: Color, textColor: Color) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)  // Reducir el padding vertical para acercar el botón
+            .padding(vertical = 4.dp)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(4.dp),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAF6)) // Fondo
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Row(
             modifier = Modifier
@@ -108,17 +124,15 @@ fun StyledAddButton(onClick: () -> Unit) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Agregar nueva", tint = Color.Black) // Ícono +
+            Icon(Icons.Default.Add, contentDescription = "Agregar nueva", tint = textColor)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Agregar nueva", color = Color.Black) // Texto en color negro
+            Text("Agregar nueva", color = textColor)
         }
     }
 }
 
-
-
 @Composable
-fun TaskItem(title: String, description: String, date: String) {
+fun TaskItem(title: String, description: String, date: String, textColor: Color, backgroundColor: Color, borderColor: Color) {
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 8.dp)
@@ -129,9 +143,9 @@ fun TaskItem(title: String, description: String, date: String) {
         ) {
             RadioButton(selected = false, onClick = {})
             Column(modifier = Modifier.padding(start = 8.dp)) {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge)
-                Text(text = description, style = MaterialTheme.typography.bodySmall)
-                Text(text = date, style = MaterialTheme.typography.bodySmall)
+                Text(text = title, style = MaterialTheme.typography.bodyLarge.copy(color = textColor))
+                Text(text = description, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
+                Text(text = date, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
             }
         }
 
@@ -142,26 +156,25 @@ fun TaskItem(title: String, description: String, date: String) {
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color.LightGray),
+                    .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Img")
+                Text(text = "Img", color = textColor)
             }
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color.LightGray),
+                    .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Img")
+                Text(text = "Img", color = textColor)
             }
         }
 
-        // Añadir línea divisoria debajo de cada tarea
         Divider(
-            color = Color.LightGray, // Color de la línea
-            thickness = 1.dp,        // Grosor de la línea
-            modifier = Modifier.padding(vertical = 8.dp) // Margen alrededor de la línea
+            color = borderColor,
+            thickness = 1.dp,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
     }
 }
