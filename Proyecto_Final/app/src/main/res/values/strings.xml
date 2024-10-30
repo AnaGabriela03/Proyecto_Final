@@ -1,3 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
-    <string name="app_name">Avance</string>
+    <string name="app_name" translatable="false">Avance</string>
+    <string name="buscar">Search</string>
+    <string name="todos">All</string>
+    <string name="pendientes">Pending</string>
+    <string name="terminados">Completed</string>
+    <string name="mis_listas">MY LISTS</string>
+    <string name="notas">Notes</string>
+    <string name="tareas">Tasks</string>
+    <string name="agregar_nueva">Add new</string>
+    <string name="recordar">Remind</string>
+    <string name="hora">Time</string>
+    <string name="fecha_y_hora">Date and time</string>
+    <string name="nota">Note</string>
+    <string name="tarea">Task</string>
+    <string name="descripci_n">Description</string>
+    <string name="t_tulo">Title</string>
+    <string name="agregar">Add</string>
+    <string name="guardar">Save</string>
+    <string name="nueva_nota">New note</string>
+    <string name="editar_nota">Edit note</string>
+    <string name="el_t_tulo_es_obligatorio">The title is required</string>
+    <string name="cancelar">Cancel</string>
+    <string name="selecciona_un_tipo">Select a type</string>
+    <string name="la_fecha_y_la_hora_son_obligatorias_para_tareas">Date and time are required for tasks</string>
+    <string name="confirmaci_n_de_eliminaci_n">Deletion confirmation</string>
+    <string name="est_s_seguro_de_que_deseas_eliminar">Are you sure you want to delete?</string>
+    <string name="eliminar">Delete</string>
+    <string name="seleccionar_tipo">Select type</string>
 </resources>

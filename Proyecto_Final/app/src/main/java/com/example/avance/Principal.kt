@@ -35,18 +35,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.res.stringResource
 
 // Pantalla principal
 @Composable
 fun Principal(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // icono de búsqueda
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())  // Habilitar el scroll vertical
+    ) {
         var searchQuery by remember { mutableStateOf("") }
         TextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Buscar") },
+            placeholder = { Text(stringResource(R.string.buscar)) },
             leadingIcon = {
                 Icon(Icons.Default.Search, contentDescription = "Buscar")
             }
@@ -56,35 +64,50 @@ fun Principal(navController: NavController) {
 
         // Seleccionar
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            StatusCard("Todos", 0, Modifier.weight(1f).padding(end = 8.dp), Icons.Default.Home)
-            StatusCard("Pendientes", 0, Modifier.weight(1f).padding(start = 8.dp), Icons.Default.Notifications)
+            StatusCard(
+                stringResource(R.string.todos), 0,
+                Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp), Icons.Default.Home)
+            StatusCard(
+                stringResource(R.string.pendientes), 0,
+                Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp), Icons.Default.Notifications)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        StatusCard("Terminados", 0, Modifier.fillMaxWidth(), Icons.Default.Check)
+        StatusCard(stringResource(R.string.terminados), 0, Modifier.fillMaxWidth(), Icons.Default.Check)
         Spacer(modifier = Modifier.height(16.dp))
 
         // Lista de notas y tareas
-        Text("MIS LISTAS", style = MaterialTheme.typography.titleLarge)
+
+        Text(
+            stringResource(R.string.mis_listas),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground // Cambia el color dependiendo del tema
+        )
+
+
 
         // Cambiar para que navegue a la tercera pantalla
         SimpleListCard(
-            title = "Notas",
+            title = stringResource(R.string.notas),
             icon = Icons.Default.Menu,
-            onClick = { navController.navigate("notesTasksScreen/Notas") } // Navega a la tercera pantalla con "Notas"
+            onClick = { navController.navigate("notesTasksScreen/Notas") } // Navega a la pantalla de Notas
         )
 
         SimpleListCard(
-            title = "Tareas",
+            title = stringResource(R.string.tareas),
             icon = Icons.Default.Menu,
-            onClick = { navController.navigate("notesTasksScreen/Tareas") } // Navega a la tercera pantalla con "Tareas"
+            onClick = { navController.navigate("notesTasksScreen/Tareas") } // Navega a la pantalla de Tareas
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Botón Agregar nueva
         SimpleListCard(
-            title = "Agregar nueva",
+            title = stringResource(R.string.agregar_nueva),
             icon = Icons.Default.Add, // Ícono de + para el botón
             onClick = { navController.navigate("secondScreen") }  // Navegar a la segunda pantalla
         )

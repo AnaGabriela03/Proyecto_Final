@@ -1,13 +1,20 @@
 package com.example.avance
 
+import android.app.TimePickerDialog
+import android.net.Uri
 import android.widget.CalendarView
-import androidx.compose.foundation.isSystemInDarkTheme
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.CameraAlt
@@ -15,105 +22,205 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 
-
-// Segunda pantalla
 @Composable
-fun segunda_pantalla(navController: NavController) {
-    val isDarkTheme = isSystemInDarkTheme() // Detecta si el sistema está en modo oscuro
+fun segunda_pantalla(
+    navController: NavController,
+    noteId: Int,
+    viewModel: NoteTaskViewModel = viewModel()  // Integración del ViewModel
+) {
+    val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val borderColor = if (isDarkTheme) Color.Gray else Color.LightGray
 
-    var selectedListOption by remember { mutableStateOf("Selecciona una lista") }
-    var expanded by remember { mutableStateOf(false) }
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf("Seleccionar tipo") }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+    var isCalendarVisible by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("Seleccione una fecha") }
+    var selectedTime by remember { mutableStateOf("Seleccione una hora") }
+
+    val fileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? -> uri?.let { /* Lógica para manejar el archivo seleccionado */ } }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap -> bitmap?.let { /* Lógica para manejar la imagen capturada */ } }
+
+    LaunchedEffect(noteId) {
+        if (noteId != -1) {
+            val note = viewModel.notesTasks.value.find { it.id == noteId }
+            note?.let {
+                title = it.title
+                description = it.description
+                selectedType = it.type
+                val parts = it.date?.split(" ") ?: listOf("Seleccione una fecha", "Seleccione una hora")
+                selectedDate = parts.getOrElse(0) { "Seleccione una fecha" }
+                selectedTime = parts.getOrElse(1) { "Seleccione una hora" }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Cancelar, Nueva nota, Agregar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(onClick = { navController.popBackStack() }) {
-                Text("Cancelar", color = textColor)  // Cambia el color según el tema
+                Text(stringResource(R.string.cancelar), color = textColor)
             }
-            Text(text = "Nueva nota", style = MaterialTheme.typography.titleLarge.copy(color = textColor)) // Color dinámico
-            TextButton(onClick = { }) {
-                Text("Agregar", color = textColor)  // Cambia el color según el tema
+            Text(
+                text = if (noteId == -1) stringResource(R.string.nueva_nota) else stringResource(R.string.editar_nota),
+                style = MaterialTheme.typography.titleLarge.copy(color = textColor)
+            )
+            TextButton(onClick = {
+                if (title.isEmpty()) {
+                    Toast.makeText(context,
+                        context.getString(R.string.el_t_tulo_es_obligatorio), Toast.LENGTH_SHORT).show()
+                } else if (selectedType == "Seleccionar tipo") {
+                    Toast.makeText(context,
+                        context.getString(R.string.selecciona_un_tipo), Toast.LENGTH_SHORT).show()
+                } else if (selectedType == "Tarea" && (selectedDate == "Seleccione una fecha" || selectedTime == "Seleccione una hora")) {
+                    Toast.makeText(context,
+                        context.getString(R.string.la_fecha_y_la_hora_son_obligatorias_para_tareas), Toast.LENGTH_SHORT).show()
+                } else {
+                    val dateTime = if (selectedType == "Tarea") {
+                        "$selectedDate $selectedTime"
+                    } else {
+                        null
+                    }
+                    val newNoteTask = NoteTask(
+                        id = if (noteId == -1) 0 else noteId,
+                        title = title,
+                        description = description,
+                        date = dateTime,
+                        type = selectedType
+                    )
+                    viewModel.addOrUpdateNoteTask(newNoteTask)
+                    navController.popBackStack()
+                }
+            }) {
+                Text(if (noteId == -1) stringResource(R.string.agregar) else stringResource(R.string.guardar), color = textColor)
             }
         }
 
-        // Título y Descripción con borde
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, borderColor, RoundedCornerShape(16.dp))  // Borde dinámico
+                .border(1.dp, borderColor, RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "TITULO", fontSize = 14.sp, color = textColor) // Color dinámico
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = stringResource(R.string.t_tulo), fontSize = 14.sp, color = textColor)
                 BasicTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = title,
+                    onValueChange = { title = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp)
-                        .background(if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)), // Fondo dinámico
-                    textStyle = TextStyle(fontSize = 18.sp, color = textColor) // Color dinámico
+                        .background(if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)),
+                    textStyle = TextStyle(fontSize = 18.sp, color = textColor)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Descripción", fontSize = 14.sp, color = textColor) // Color dinámico
+                Text(text = stringResource(R.string.descripci_n), fontSize = 14.sp, color = textColor)
                 BasicTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = description,
+                    onValueChange = { description = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .background(if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)), // Fondo dinámico
-                    textStyle = TextStyle(fontSize = 16.sp, color = textColor) // Color dinámico
+                        .background(if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)),
+                    textStyle = TextStyle(fontSize = 16.sp, color = textColor)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Selecciona una lista
-        ListCardWithIcon(
-            title = "   lista",
-            icon = Icons.Default.Menu,  // Aquí se usa un ícono para la lista
-            items = listOf("Tarea", "Nota"),
-            textColor = textColor  // Pasar color dinámico
-        )
+        Box {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isDropdownExpanded = true }
+                    .padding(bottom = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE5E3E9))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Tipo", tint = Color.Black)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = stringResource(R.string.seleccionar_tipo), color = Color.Black)
+                    }
+                    Icon(imageVector = Icons.Default.Menu, contentDescription = "Abrir menú", tint = Color.Black)
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            DropdownMenu(
+                expanded = isDropdownExpanded,
+                onDismissRequest = { isDropdownExpanded = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tarea), color = if (isDarkTheme) Color.White else Color.Black) }, // Color según el tema
+                    onClick = {
+                        selectedType = "Tarea"
+                        isDropdownExpanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.nota), color = if (isDarkTheme) Color.White else Color.Black) }, // Color según el tema
+                    onClick = {
+                        selectedType = "Nota"
+                        isDropdownExpanded = false
+                    }
+                )
+            }
 
-        // Sección de íconos con borde alrededor
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))  // Borde dinámico
+                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
                 .padding(8.dp)
         ) {
             Row(
@@ -121,40 +228,37 @@ fun segunda_pantalla(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor) // Icono dinámico
+                if (selectedType == "Tarea") {
+                    IconButton(onClick = { isCalendarVisible = !isCalendarVisible }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
+                    }
                 }
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.AttachFile, contentDescription = "Clip", tint = textColor) // Icono dinámico
+                IconButton(onClick = { fileLauncher.launch("*/*") }) {
+                    Icon(Icons.Default.AttachFile, contentDescription = "Adjuntar archivo", tint = textColor)
                 }
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor) // Icono dinámico
+                IconButton(onClick = { cameraLauncher.launch(null) }) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
                 }
             }
         }
 
-        // Borde alrededor del calendario y los botones
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, borderColor, RoundedCornerShape(16.dp)) // Borde dinámico
-                .padding(16.dp)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Fecha y hora",
-                    fontWeight = FontWeight.Bold,
-                    color = textColor,  // Texto dinámico
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+        if (isCalendarVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.fecha_y_hora),
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
 
-                // Calendario
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(16.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     AndroidView(
                         factory = { context ->
                             CalendarView(context).apply {
@@ -163,112 +267,46 @@ fun segunda_pantalla(navController: NavController) {
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Botones Hora y Recordar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(4.dp)
-                            .clickable {},
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Row(
+                        Button(
+                            onClick = {
+                                val calendar = Calendar.getInstance()
+                                val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                                val minute = calendar.get(Calendar.MINUTE)
+
+                                TimePickerDialog(context, { _, selectedHour, selectedMinute ->
+                                    selectedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+                                }, hour, minute, true).show()
+                            },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                                .weight(1f)
+                                .padding(4.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEEEEE))
                         ) {
-                            Icon(Icons.Default.Schedule, contentDescription = "Hora", tint = textColor) // Icono dinámico
+                            Icon(imageVector = Icons.Default.Schedule, contentDescription = "Hora", tint = Color.Black)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Hora", color = textColor) // Texto dinámico
+                            Text(stringResource(R.string.hora), color = Color.Black)
                         }
-                    }
 
-                    Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(4.dp)
-                            .clickable {},
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6))
-                    ) {
-                        Row(
+                        Button(
+                            onClick = { isCalendarVisible = false },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                                .weight(1f)
+                                .padding(4.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEEEEE))
                         ) {
-                            Icon(Icons.Default.DateRange, contentDescription = "Recordar", tint = textColor) // Icono dinámico
+                            Icon(imageVector = Icons.Default.DateRange, contentDescription = "Recordar", tint = Color.Black)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Recordar", color = textColor) // Texto dinámico
+                            Text(stringResource(R.string.recordar), color = Color.Black)
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Componente para la lista
-@Composable
-fun ListCardWithIcon(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    items: List<String>,
-    textColor: Color // Pasar el color dinámico
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { expanded = !expanded },
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = icon, contentDescription = title, tint = textColor)  // Icono dinámico
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(title, color = textColor)  // Texto dinámico
-                }
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Desplegar",
-                    tint = textColor  // Cambia color del icono
-                )
-            }
-            if (expanded && items.isNotEmpty()) {
-                Column {
-                    items.forEach { item ->
-                        Text(
-                            text = item,
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .clickable { /* acción de clic */ },
-                            color = textColor // Texto dinámico para ítems
-                        )
                     }
                 }
             }

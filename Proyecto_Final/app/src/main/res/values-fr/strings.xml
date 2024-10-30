@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="buscar">Rechercher</string>
+    <string name="todos">Tous</string>
+    <string name="pendientes">En attente</string>
+    <string name="terminados">Terminés</string>
+    <string name="mis_listas">MES LISTES</string>
+    <string name="notas">Notes</string>
+    <string name="tareas">Tâches</string>
+    <string name="agregar_nueva">Ajouter nouveau</string>
+    <string name="recordar">Rappeler</string>
+    <string name="hora">Heure</string>
+    <string name="fecha_y_hora">Date et heure</string>
+    <string name="nota">Note</string>
+    <string name="tarea">Tâche</string>
+    <string name="descripci_n">Description</string>
+    <string name="t_tulo">Titre</string>
+    <string name="agregar">Ajouter</string>
+    <string name="guardar">Enregistrer</string>
+    <string name="nueva_nota">Nouvelle note</string>
+    <string name="editar_nota">Modifier la note</string>
+    <string name="el_t_tulo_es_obligatorio">Le titre est obligatoire</string>
+    <string name="cancelar">Annuler</string>
+    <string name="selecciona_un_tipo">Sélectionnez un type</string>
+    <string name="la_fecha_y_la_hora_son_obligatorias_para_tareas">La date et l heure sont obligatoires pour les tâches</string>
+    <string name="confirmaci_n_de_eliminaci_n">Confirmation de suppression</string>
+    <string name="est_s_seguro_de_que_deseas_eliminar">Êtes-vous sûr de vouloir supprimer ?</string>
+    <string name="eliminar">Supprimer</string>
+    <string name="seleccionar_tipo">Sélectionner le type</string>
+
+</resources>

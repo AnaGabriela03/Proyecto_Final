@@ -3,58 +3,71 @@ package com.example.avance
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.navigation.navArgument
 
-val Typography = androidx.compose.material3.Typography()
-val Shapes = androidx.compose.material3.Shapes()
-
-// Esquemas de colores claros y oscuros
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF6200EE),
-    onPrimary = Color.White,
-    background = Color(0xFFF5F5F5),  // Fondo claro
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color.Black
-)
-
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFBB86FC),
-    onPrimary = Color.Black,
-    background = Color(0xFF121212),  // Fondo oscuro
-    surface = Color(0xFF121212),
-    onSurface = Color.White
-)
-
-// Configura la navegación y el tema
 @Composable
-fun MyApp() {
-    val darkTheme = isSystemInDarkTheme() // Detecta si el sistema está en modo oscuro
+fun MyApp(noteTaskDao: NoteTaskDao) {
+    val darkTheme = isSystemInDarkTheme()
+    val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
+
+    // Crear el ViewModel usando el NoteTaskViewModelFactory
+    val viewModel: NoteTaskViewModel = viewModel(factory = NoteTaskViewModelFactory(noteTaskDao))
+
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors, // Cambia el esquema de colores
-        typography = Typography,
-        shapes = Shapes
+        colorScheme = colorScheme
     ) {
         val navController = rememberNavController()
 
-        // Aplicar el fondo dinámico según el tema
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background) // Cambia el fondo dinámico
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            composable("home") { Principal(navController) }
-            composable("secondScreen") { segunda_pantalla(navController) }
-            composable("notesTasksScreen/{item}") { backStackEntry ->
+            composable("home") {
+                Principal(navController)
+            }
+
+            composable(
+                "secondScreen?noteId={noteId}", // Define la segunda pantalla
+                arguments = listOf(navArgument("noteId") {
+                    type = NavType.IntType
+                    defaultValue = -1 // Valor por defecto para nueva nota
+                })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getInt("noteId") ?: -1
+                segunda_pantalla(
+                    navController = navController,
+                    noteId = noteId,
+                    viewModel = viewModel // Pasa el ViewModel en lugar del DAO
+                )
+            }
+
+            composable(
+                "notesTasksScreen/{item}",
+                arguments = listOf(navArgument("item") { type = NavType.StringType })
+            ) { backStackEntry ->
                 val item = backStackEntry.arguments?.getString("item") ?: "Notas/Tareas"
-                tercera_pantalla(item, listOf(item), navController)
+                val isTaskSelected = item == "Tareas"
+
+                tercera_pantalla(
+                    title = if (isTaskSelected) stringResource(R.string.tareas) else stringResource(R.string.notas),
+                    navController = navController,
+                    viewModel = viewModel, // Pasa el ViewModel en lugar del DAO
+                    isTaskSelected = isTaskSelected
+                )
             }
         }
     }
