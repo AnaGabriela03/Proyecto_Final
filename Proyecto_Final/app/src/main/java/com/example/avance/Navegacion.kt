@@ -20,15 +20,10 @@ import androidx.navigation.navArgument
 fun MyApp(noteTaskDao: NoteTaskDao) {
     val darkTheme = isSystemInDarkTheme()
     val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
-
-    // Crear el ViewModel usando el NoteTaskViewModelFactory
     val viewModel: NoteTaskViewModel = viewModel(factory = NoteTaskViewModelFactory(noteTaskDao))
+    val navController = rememberNavController()
 
-    MaterialTheme(
-        colorScheme = colorScheme
-    ) {
-        val navController = rememberNavController()
-
+    MaterialTheme(colorScheme = colorScheme) {
         NavHost(
             navController = navController,
             startDestination = "home",
@@ -41,18 +36,29 @@ fun MyApp(noteTaskDao: NoteTaskDao) {
             }
 
             composable(
-                "secondScreen?noteId={noteId}", // Define la segunda pantalla
-                arguments = listOf(navArgument("noteId") {
-                    type = NavType.IntType
-                    defaultValue = -1 // Valor por defecto para nueva nota
-                })
+                "secondScreen?noteId={noteId}&type={type}",
+                arguments = listOf(
+                    navArgument("noteId") { type = NavType.IntType; defaultValue = -1 },
+                    navArgument("type") { type = NavType.StringType; defaultValue = "" }
+                )
             ) { backStackEntry ->
                 val noteId = backStackEntry.arguments?.getInt("noteId") ?: -1
+                val type = backStackEntry.arguments?.getString("type") ?: ""
                 segunda_pantalla(
                     navController = navController,
                     noteId = noteId,
-                    viewModel = viewModel // Pasa el ViewModel en lugar del DAO
+                    initialType = type,
+                    viewModel = viewModel
                 )
+            }
+
+            // Ruta para abrir la pantalla de visualización de una nota o tarea
+            composable(
+                "verPantalla?noteId={noteId}",
+                arguments = listOf(navArgument("noteId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getInt("noteId") ?: -1
+                VerPantalla(navController = navController, noteId = noteId, viewModel = viewModel)
             }
 
             composable(
@@ -61,11 +67,10 @@ fun MyApp(noteTaskDao: NoteTaskDao) {
             ) { backStackEntry ->
                 val item = backStackEntry.arguments?.getString("item") ?: "Notas/Tareas"
                 val isTaskSelected = item == "Tareas"
-
                 tercera_pantalla(
                     title = if (isTaskSelected) stringResource(R.string.tareas) else stringResource(R.string.notas),
                     navController = navController,
-                    viewModel = viewModel, // Pasa el ViewModel en lugar del DAO
+                    viewModel = viewModel,
                     isTaskSelected = isTaskSelected
                 )
             }

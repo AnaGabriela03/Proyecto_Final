@@ -38,19 +38,15 @@ import kotlinx.coroutines.withContext
 fun tercera_pantalla(
     title: String,
     navController: NavController,
-    viewModel: NoteTaskViewModel,  // Asegúrate de incluir el parámetro viewModel aquí
-    isTaskSelected: Boolean  // Asegúrate de incluir el parámetro isTaskSelected aquí
+    viewModel: NoteTaskViewModel,
+    isTaskSelected: Boolean
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val backgroundColor = if (isDarkTheme) Color.DarkGray else Color(0xFFE8EAF6)
     val borderColor = if (isDarkTheme) Color.LightGray else Color.Black
-    val scrollState = rememberScrollState()
-
-    // Observar el flujo de notas/tareas desde el ViewModel
     val notes by viewModel.notesTasks.collectAsState()
 
-    // Cargar las notas o tareas al iniciar la pantalla
     LaunchedEffect(isTaskSelected) {
         viewModel.loadNotesTasks(isTaskSelected)
     }
@@ -59,7 +55,7 @@ fun tercera_pantalla(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(scrollState)
+            .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = title,
@@ -69,7 +65,6 @@ fun tercera_pantalla(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar lista de tareas/notas desde la base de datos
         notes.forEach { note ->
             TaskItem(
                 title = note.title,
@@ -78,18 +73,21 @@ fun tercera_pantalla(
                 textColor = textColor,
                 backgroundColor = backgroundColor,
                 borderColor = borderColor,
+                isTask = note.type == "Tarea",
                 onEdit = {
-                    navController.navigate("secondScreen?noteId=${note.id}")
+                    navController.navigate("secondScreen?noteId=${note.id}&type=${note.type}")
+                },
+                onClick = {
+                    navController.navigate("verPantalla?noteId=${note.id}")
                 },
                 onDelete = {
-                    viewModel.deleteNoteTask(note) // Llama a la función de eliminación en el ViewModel
+                    viewModel.deleteNoteTask(note)
                 }
             )
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Sección de botones con borde en la parte inferior
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,17 +98,14 @@ fun tercera_pantalla(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // Botón del calendario
                 if (isTaskSelected) {
                     IconButton(onClick = { /* Muestra el calendario */ }) {
                         Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
                     }
                 }
-                // Ícono para abrir archivos
                 IconButton(onClick = { /* Lanza el selector de archivos */ }) {
                     Icon(Icons.Default.AttachFile, contentDescription = "Adjuntar archivo", tint = textColor)
                 }
-                // Ícono para abrir cámara
                 IconButton(onClick = { /* Lanza la cámara */ }) {
                     Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
                 }
@@ -120,13 +115,12 @@ fun tercera_pantalla(
         Spacer(modifier = Modifier.height(12.dp))
 
         StyledAddButton(
-            onClick = { navController.navigate("secondScreen") },
+            onClick = { navController.navigate("secondScreen?type=${if (isTaskSelected) "Tarea" else "Nota"}") },
             backgroundColor = backgroundColor,
             textColor = textColor
         )
     }
 }
-
 
 @Composable
 fun StyledAddButton(onClick: () -> Unit, backgroundColor: Color, textColor: Color) {
@@ -161,39 +155,58 @@ fun TaskItem(
     textColor: Color,
     backgroundColor: Color,
     borderColor: Color,
+    isTask: Boolean,
     onEdit: () -> Unit,
+    onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var isChecked by remember { mutableStateOf(false) }  // Estado del checkbox
+    val coroutineScope = rememberCoroutineScope()
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-            .padding(8.dp)
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge.copy(color = textColor))
-                Text(text = description, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
-                if (date != null) {
-                    Text(text = date, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
+        if (isTask) {
+            Checkbox(
+                checked = isChecked,
+                onCheckedChange = { checked ->
+                    isChecked = checked  // Actualiza el estado del checkbox
+                    if (checked) {
+                        // Iniciar un retraso de 3 segundos para eliminar la tarea
+                        coroutineScope.launch {
+                            kotlinx.coroutines.delay(3000)
+                            if (isChecked) {  // Verificar si aún está marcado
+                                onDelete()
+                                isChecked = false  // Restablece el estado del checkbox
+                            }
+                        }
+                    }
                 }
-            }
+            )
+        }
 
-            Row {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar", tint = textColor)
-                }
-                IconButton(onClick = { showDeleteConfirmation = true }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = textColor)
-                }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge.copy(color = textColor))
+            Text(text = description, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
+            date?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
             }
+        }
+
+        IconButton(onClick = onEdit) {
+            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = textColor)
+        }
+        IconButton(onClick = { showDeleteConfirmation = true }) {
+            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = textColor)
         }
     }
 
@@ -206,6 +219,7 @@ fun TaskItem(
                 TextButton(onClick = {
                     showDeleteConfirmation = false
                     onDelete()
+                    isChecked = false  // Restablece el estado del checkbox tras la eliminación
                 }) {
                     Text(stringResource(R.string.eliminar), color = Color.Red)
                 }

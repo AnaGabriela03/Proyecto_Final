@@ -40,6 +40,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.res.stringResource
 
 // Pantalla principal
+// Pantalla principal
 @Composable
 fun Principal(navController: NavController) {
 
@@ -81,26 +82,23 @@ fun Principal(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Lista de notas y tareas
-
         Text(
             stringResource(R.string.mis_listas),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground // Cambia el color dependiendo del tema
+            color = MaterialTheme.colorScheme.onBackground
         )
-
-
 
         // Cambiar para que navegue a la tercera pantalla
         SimpleListCard(
             title = stringResource(R.string.notas),
             icon = Icons.Default.Menu,
-            onClick = { navController.navigate("notesTasksScreen/Notas") } // Navega a la pantalla de Notas
+            onClick = { navController.navigate("notesTasksScreen/Notas") }
         )
 
         SimpleListCard(
             title = stringResource(R.string.tareas),
             icon = Icons.Default.Menu,
-            onClick = { navController.navigate("notesTasksScreen/Tareas") } // Navega a la pantalla de Tareas
+            onClick = { navController.navigate("notesTasksScreen/Tareas") }
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -108,8 +106,8 @@ fun Principal(navController: NavController) {
         // Botón Agregar nueva
         SimpleListCard(
             title = stringResource(R.string.agregar_nueva),
-            icon = Icons.Default.Add, // Ícono de + para el botón
-            onClick = { navController.navigate("secondScreen") }  // Navegar a la segunda pantalla
+            icon = Icons.Default.Add,
+            onClick = { navController.navigate("secondScreen") }  // Navegar sin especificar tipo
         )
     }
 }
@@ -120,13 +118,13 @@ fun Principal(navController: NavController) {
 fun SimpleListCard(
     title: String,
     icon: ImageVector,
-    onClick: () -> Unit // Callback cuando se hace clic
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onClick() }, // Navega cuando se hace clic
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
@@ -137,7 +135,7 @@ fun SimpleListCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = icon, contentDescription = title)  // Icono de la lista
+                Icon(imageVector = icon, contentDescription = title)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(title)
             }
@@ -151,7 +149,7 @@ fun ListCardWithIcon(
     title: String,
     icon: ImageVector,
     items: List<String>,
-    onItemClick: ((String) -> Unit)? = null // Callback para los ítems
+    onItemClick: ((String) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -171,12 +169,12 @@ fun ListCardWithIcon(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = icon, contentDescription = title)  // Icono de la lista
+                    Icon(imageVector = icon, contentDescription = title)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(title)
                 }
                 if (items.isNotEmpty()) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Desplegar")  // Icono de despliegue
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Desplegar")
                 }
             }
             if (expanded && items.isNotEmpty()) {
@@ -186,7 +184,7 @@ fun ListCardWithIcon(
                             text = item,
                             modifier = Modifier
                                 .padding(8.dp)
-                                .clickable { onItemClick?.invoke(item) }  // Hacer el ítem clicleable
+                                .clickable { onItemClick?.invoke(item) }
                         )
                     }
                 }
@@ -211,16 +209,13 @@ fun StatusCard(title: String, count: Int, modifier: Modifier = Modifier, icon: I
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Ícono a la izquierda
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
                     modifier = Modifier.size(32.dp)
                 )
-                // Número a la derecha
                 Text(text = "$count", style = MaterialTheme.typography.headlineMedium)
             }
-            // Título centrado en la parte inferior
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,

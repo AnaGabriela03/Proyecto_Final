@@ -64,6 +64,7 @@ dependencies {
     // Dependencia para la navegación en Jetpack Compose
     implementation("androidx.navigation:navigation-compose:2.8.3") // para cambiar pantallas
 
+
     // Dependencias de Compose BOM y Material3
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -87,6 +88,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    implementation("androidx.navigation:navigation-compose:2.5.3")
 
     // Material icons extended
     implementation("androidx.compose.material:material-icons-extended:1.5.0")

@@ -44,7 +44,8 @@ import java.util.Calendar
 fun segunda_pantalla(
     navController: NavController,
     noteId: Int,
-    viewModel: NoteTaskViewModel = viewModel()  // Integración del ViewModel
+    initialType: String,  // Tipo inicial que viene de la navegación
+    viewModel: NoteTaskViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
@@ -53,7 +54,7 @@ fun segunda_pantalla(
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf("Seleccionar tipo") }
+    var selectedType by remember { mutableStateOf(initialType) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var isCalendarVisible by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("Seleccione una fecha") }
@@ -107,9 +108,6 @@ fun segunda_pantalla(
                 if (title.isEmpty()) {
                     Toast.makeText(context,
                         context.getString(R.string.el_t_tulo_es_obligatorio), Toast.LENGTH_SHORT).show()
-                } else if (selectedType == "Seleccionar tipo") {
-                    Toast.makeText(context,
-                        context.getString(R.string.selecciona_un_tipo), Toast.LENGTH_SHORT).show()
                 } else if (selectedType == "Tarea" && (selectedDate == "Seleccione una fecha" || selectedTime == "Seleccione una hora")) {
                     Toast.makeText(context,
                         context.getString(R.string.la_fecha_y_la_hora_son_obligatorias_para_tareas), Toast.LENGTH_SHORT).show()
@@ -167,53 +165,57 @@ fun segunda_pantalla(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isDropdownExpanded = true }
-                    .padding(bottom = 8.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE5E3E9))
-            ) {
-                Row(
+        // Ocultar el selector de tipo cuando ya se ha definido
+        // Dentro del bloque de la UI de selección de tipo
+        if (noteId == -1 && initialType.isEmpty()) {
+            Box {
+                Card(
                     modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .clickable { isDropdownExpanded = true }
+                        .padding(bottom = 8.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE5E3E9))
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Tipo", tint = Color.Black)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = stringResource(R.string.seleccionar_tipo), color = Color.Black)
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Tipo", tint = Color.Black)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = selectedType.ifEmpty { stringResource(R.string.seleccionar_tipo) }, color = Color.Black) // Mostrar "Seleccionar tipo" si está vacío
+                        }
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Abrir menú", tint = Color.Black)
                     }
-                    Icon(imageVector = Icons.Default.Menu, contentDescription = "Abrir menú", tint = Color.Black)
+                }
+
+                DropdownMenu(
+                    expanded = isDropdownExpanded,
+                    onDismissRequest = { isDropdownExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.tarea), color = if (isDarkTheme) Color.White else Color.Black) },
+                        onClick = {
+                            selectedType = "Tarea"  // Actualiza el texto a "Tarea"
+                            isDropdownExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.nota), color = if (isDarkTheme) Color.White else Color.Black) },
+                        onClick = {
+                            selectedType = "Nota"  // Actualiza el texto a "Nota"
+                            isDropdownExpanded = false
+                        }
+                    )
                 }
             }
-
-            DropdownMenu(
-                expanded = isDropdownExpanded,
-                onDismissRequest = { isDropdownExpanded = false },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.tarea), color = if (isDarkTheme) Color.White else Color.Black) }, // Color según el tema
-                    onClick = {
-                        selectedType = "Tarea"
-                        isDropdownExpanded = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.nota), color = if (isDarkTheme) Color.White else Color.Black) }, // Color según el tema
-                    onClick = {
-                        selectedType = "Nota"
-                        isDropdownExpanded = false
-                    }
-                )
-            }
-
         }
+
 
         Spacer(modifier = Modifier.weight(1f))
 
