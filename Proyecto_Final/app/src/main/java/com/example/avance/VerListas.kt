@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.DateRange
@@ -34,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun tercera_pantalla(
     title: String,
@@ -51,74 +53,89 @@ fun tercera_pantalla(
         viewModel.loadNotesTasks(isTaskSelected)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge.copy(color = textColor),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        notes.forEach { note ->
-            TaskItem(
-                title = note.title,
-                description = note.description,
-                date = note.date,
-                textColor = textColor,
-                backgroundColor = backgroundColor,
-                borderColor = borderColor,
-                isTask = note.type == "Tarea",
-                onEdit = {
-                    navController.navigate("secondScreen?noteId=${note.id}&type=${note.type}")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(title)
+                    }
                 },
-                onClick = {
-                    navController.navigate("verPantalla?noteId=${note.id}")
-                },
-                onDelete = {
-                    viewModel.deleteNoteTask(note)
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 }
             )
         }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Box(
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                .padding(8.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Spacer(modifier = Modifier.height(16.dp))
+
+            notes.forEach { note ->
+                TaskItem(
+                    title = note.title,
+                    description = note.description,
+                    date = note.date,
+                    textColor = textColor,
+                    backgroundColor = backgroundColor,
+                    borderColor = borderColor,
+                    isTask = note.type == "Tarea",
+                    onEdit = {
+                        navController.navigate("secondScreen?noteId=${note.id}&type=${note.type}")
+                    },
+                    onClick = {
+                        navController.navigate("verPantalla?noteId=${note.id}")
+                    },
+                    onDelete = {
+                        viewModel.deleteNoteTask(note)
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .padding(8.dp)
             ) {
-                if (isTaskSelected) {
-                    IconButton(onClick = { /* Muestra el calendario */ }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    if (isTaskSelected) {
+                        IconButton(onClick = { /* Muestra el calendario */ }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
+                        }
+                    }
+                    IconButton(onClick = { /* Lanza el selector de archivos */ }) {
+                        Icon(Icons.Default.AttachFile, contentDescription = "Adjuntar archivo", tint = textColor)
+                    }
+                    IconButton(onClick = { /* Lanza la cámara */ }) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
                     }
                 }
-                IconButton(onClick = { /* Lanza el selector de archivos */ }) {
-                    Icon(Icons.Default.AttachFile, contentDescription = "Adjuntar archivo", tint = textColor)
-                }
-                IconButton(onClick = { /* Lanza la cámara */ }) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
-                }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            StyledAddButton(
+                onClick = { navController.navigate("secondScreen?type=${if (isTaskSelected) "Tarea" else "Nota"}") },
+                backgroundColor = backgroundColor,
+                textColor = textColor
+            )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        StyledAddButton(
-            onClick = { navController.navigate("secondScreen?type=${if (isTaskSelected) "Tarea" else "Nota"}") },
-            backgroundColor = backgroundColor,
-            textColor = textColor
-        )
     }
 }
 

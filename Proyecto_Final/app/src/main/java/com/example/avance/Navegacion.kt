@@ -17,10 +17,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 
 @Composable
-fun MyApp(noteTaskDao: NoteTaskDao) {
+fun MyApp(noteTaskRepository: NoteTaskRepository) {
     val darkTheme = isSystemInDarkTheme()
     val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
-    val viewModel: NoteTaskViewModel = viewModel(factory = NoteTaskViewModelFactory(noteTaskDao))
+    val viewModel: NoteTaskViewModel = viewModel(factory = NoteTaskViewModelFactory(noteTaskRepository))
     val navController = rememberNavController()
 
     MaterialTheme(colorScheme = colorScheme) {
@@ -52,7 +52,6 @@ fun MyApp(noteTaskDao: NoteTaskDao) {
                 )
             }
 
-            // Ruta para abrir la pantalla de visualización de una nota o tarea
             composable(
                 "verPantalla?noteId={noteId}",
                 arguments = listOf(navArgument("noteId") { type = NavType.IntType })

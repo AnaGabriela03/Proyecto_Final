@@ -7,7 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class NoteTaskViewModel(private val noteTaskDao: NoteTaskDao) : ViewModel() {
+class NoteTaskViewModel(private val repository: NoteTaskRepository) : ViewModel() {
 
     private val _notesTasks = MutableStateFlow<List<NoteTask>>(emptyList())
     val notesTasks: StateFlow<List<NoteTask>> = _notesTasks
@@ -15,9 +15,9 @@ class NoteTaskViewModel(private val noteTaskDao: NoteTaskDao) : ViewModel() {
     fun loadNotesTasks(isTaskSelected: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             _notesTasks.value = if (isTaskSelected) {
-                noteTaskDao.getAllTasks()
+                repository.getAllTasks()
             } else {
-                noteTaskDao.getAllNotes()
+                repository.getAllNotes()
             }
         }
     }
@@ -25,9 +25,9 @@ class NoteTaskViewModel(private val noteTaskDao: NoteTaskDao) : ViewModel() {
     fun addOrUpdateNoteTask(noteTask: NoteTask) {
         viewModelScope.launch(Dispatchers.IO) {
             if (noteTask.id == 0) {
-                noteTaskDao.insert(noteTask)
+                repository.insert(noteTask)
             } else {
-                noteTaskDao.update(noteTask)
+                repository.update(noteTask)
             }
             loadNotesTasks(noteTask.type == "Tarea")
         }
@@ -35,8 +35,8 @@ class NoteTaskViewModel(private val noteTaskDao: NoteTaskDao) : ViewModel() {
 
     fun deleteNoteTask(noteTask: NoteTask) {
         viewModelScope.launch(Dispatchers.IO) {
-            noteTaskDao.delete(noteTask)
-            loadNotesTasks(noteTask.type == "Tarea")  // Recarga los datos
+            repository.delete(noteTask)
+            loadNotesTasks(noteTask.type == "Tarea")
         }
     }
 }
