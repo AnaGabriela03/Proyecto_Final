@@ -33,6 +33,7 @@ class NoteTaskViewModel(private val repository: NoteTaskRepository) : ViewModel(
         }
     }
 
+
     fun deleteNoteTask(noteTask: NoteTask) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.delete(noteTask)

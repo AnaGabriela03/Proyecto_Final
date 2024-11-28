@@ -50,36 +50,7 @@ fun Principal(navController: NavController) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())  // Habilitar el scroll vertical
     ) {
-        var searchQuery by remember { mutableStateOf("") }
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(stringResource(R.string.buscar)) },
-            leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = "Buscar")
-            }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Seleccionar
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            StatusCard(
-                stringResource(R.string.todos), 0,
-                Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp), Icons.Default.Home)
-            StatusCard(
-                stringResource(R.string.pendientes), 0,
-                Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp), Icons.Default.Notifications)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        StatusCard(stringResource(R.string.terminados), 0, Modifier.fillMaxWidth(), Icons.Default.Check)
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Lista de notas y tareas
         Text(

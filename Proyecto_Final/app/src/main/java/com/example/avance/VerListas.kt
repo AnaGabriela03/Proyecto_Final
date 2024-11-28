@@ -1,9 +1,12 @@
 package com.example.avance
 
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.widget.CalendarView
+import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,16 +27,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import kotlinx.coroutines.Dispatchers
+import coil.compose.AsyncImage
+import coil.imageLoader
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +93,8 @@ fun tercera_pantalla(
                     title = note.title,
                     description = note.description,
                     date = note.date,
+                    imageUris = note.imageUri?.split(",")?.map { Uri.parse(it) } ?: emptyList(),
+                    fileUris = note.fileUri?.split(",")?.map { Uri.parse(it) } ?: emptyList(),
                     textColor = textColor,
                     backgroundColor = backgroundColor,
                     borderColor = borderColor,
@@ -104,37 +113,17 @@ fun tercera_pantalla(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                    .padding(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    if (isTaskSelected) {
-                        IconButton(onClick = { /* Muestra el calendario */ }) {
-                            Icon(Icons.Default.DateRange, contentDescription = "Calendario", tint = textColor)
-                        }
-                    }
-                    IconButton(onClick = { /* Lanza el selector de archivos */ }) {
-                        Icon(Icons.Default.AttachFile, contentDescription = "Adjuntar archivo", tint = textColor)
-                    }
-                    IconButton(onClick = { /* Lanza la cámara */ }) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Cámara", tint = textColor)
-                    }
-                }
-            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             StyledAddButton(
-                onClick = { navController.navigate("secondScreen?type=${if (isTaskSelected) "Tarea" else "Nota"}") },
+                onClick = {
+                    navController.navigate("secondScreen?type=${if (isTaskSelected) "Tarea" else "Nota"}")
+                },
                 backgroundColor = backgroundColor,
                 textColor = textColor
             )
+
         }
     }
 }
@@ -169,6 +158,8 @@ fun TaskItem(
     title: String,
     description: String,
     date: String?,
+    imageUris: List<Uri>,
+    fileUris: List<Uri>,
     textColor: Color,
     backgroundColor: Color,
     borderColor: Color,
@@ -217,6 +208,27 @@ fun TaskItem(
             date?.let {
                 Text(text = it, style = MaterialTheme.typography.bodySmall.copy(color = textColor))
             }
+
+            // Mostrar las imágenes y videos en miniatura si existen
+            if (imageUris.isNotEmpty() || fileUris.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                    imageUris.take(3).forEach { uri ->
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .padding(end = 4.dp)
+                        )
+                    }
+
+                    fileUris.take(3).forEach { uri ->
+                        // Mostrar la miniatura del video
+                        VideoThumbnail(videoUri = uri)
+                    }
+                }
+            }
         }
 
         IconButton(onClick = onEdit) {
@@ -246,6 +258,33 @@ fun TaskItem(
                     Text(stringResource(R.string.cancelar))
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun VideoThumbnail(videoUri: Uri) {
+    // Utilizamos MediaMetadataRetriever para obtener la miniatura del video
+    val context = LocalContext.current
+    val retriever = remember { MediaMetadataRetriever() }
+    val thumbnail = remember {
+        try {
+            retriever.setDataSource(context, videoUri)
+            retriever.getFrameAtTime(1000000)  // Primer fotograma del video
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // Si la miniatura es válida, la mostramos
+    thumbnail?.let {
+        Image(
+            bitmap = it.asImageBitmap(),
+            contentDescription = "Video Thumbnail",
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .padding(end = 4.dp)
         )
     }
 }
